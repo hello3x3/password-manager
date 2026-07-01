@@ -1,0 +1,12 @@
+# Compiled binaries
+password
+password.exe
+*.o
+*.obj
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~

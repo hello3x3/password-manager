@@ -1,0 +1,94 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - target: linux
+            artifact: password
+            artifact_name: password-linux-x86_64
+            os: ubuntu-latest
+
+          - target: windows
+            artifact: password.exe
+            artifact_name: password-windows-x86_64.exe
+            os: ubuntu-latest
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Linux dependencies
+        if: matrix.target == 'linux'
+        run: sudo apt-get update && sudo apt-get install -y libssl-dev
+
+      - name: Install Windows cross-compile dependencies
+        if: matrix.target == 'windows'
+        run: sudo apt-get update && sudo apt-get install -y mingw-w64
+
+      - name: Cache OpenSSL for MinGW
+        if: matrix.target == 'windows'
+        uses: actions/cache@v4
+        id: cache-openssl
+        with:
+          path: /usr/local/openssl-mingw64
+          key: openssl-mingw64-3.0.15-v2
+
+      - name: Build OpenSSL for MinGW
+        if: matrix.target == 'windows' && steps.cache-openssl.outputs.cache-hit != 'true'
+        run: |
+          curl -fsSLo /tmp/openssl.tar.gz https://github.com/openssl/openssl/releases/download/openssl-3.0.15/openssl-3.0.15.tar.gz
+          tar xzf /tmp/openssl.tar.gz -C /tmp
+          cd /tmp/openssl-3.0.15
+          ./Configure mingw64 \
+            --prefix=/usr/local/openssl-mingw64 \
+            --cross-compile-prefix=x86_64-w64-mingw32- \
+            no-shared
+          make -j$(nproc)
+          sudo make install
+
+      - name: Build (Linux)
+        if: matrix.target == 'linux'
+        run: |
+          g++ -std=c++17 -O2 password.cpp -o password \
+            -lssl -lcrypto -static-libgcc -static-libstdc++
+
+      - name: Build (Windows)
+        if: matrix.target == 'windows'
+        run: |
+          x86_64-w64-mingw32-g++ -std=c++17 -O2 password.cpp -o password.exe \
+            -I/usr/local/openssl-mingw64/include \
+            -L/usr/local/openssl-mingw64/lib64 \
+            -lssl -lcrypto -static -static-libgcc -static-libstdc++ \
+            -lws2_32 -lcrypt32
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: ${{ matrix.artifact }}
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/password-linux-x86_64/password
+            artifacts/password-windows-x86_64.exe/password.exe
