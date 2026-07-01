@@ -1,0 +1,26 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download artifacts from latest build
+        uses: dawidd6/action-download-artifact@v3
+        with:
+          workflow: build.yml
+          workflow_conclusion: success
+          branch: main
+          path: artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/password-linux-x86_64/password
+            artifacts/password-windows-x86_64.exe/password.exe
