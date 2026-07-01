@@ -1,6 +1,6 @@
 # Password Manager
 
-[![Build](https://github.com/YOUR_USERNAME/password-manager/actions/workflows/build.yml/badge.svg)](https://github.com/YOUR_USERNAME/password-manager/actions/workflows/build.yml)
+[![Build](https://github.com/hello3x3/password-manager/actions/workflows/build.yml/badge.svg)](https://github.com/hello3x3/password-manager/actions/workflows/build.yml)
 
 A simple, secure command-line password manager written in C++ using OpenSSL AES-256-CBC encryption. Passwords are stored encrypted in `~/.ssh/password.enc`.
 
@@ -50,7 +50,7 @@ x86_64-w64-mingw32-g++ -std=c++17 -O2 password.cpp -o password.exe \
 
 ### Download Prebuilt Binaries
 
-Go to the [Releases](https://github.com/YOUR_USERNAME/password-manager/releases) page to download prebuilt binaries for:
+Go to the [Releases](https://github.com/hello3x3/password-manager/releases) page to download prebuilt binaries for:
 
 - `password-linux-x86_64` — Linux x86_64
 - `password-windows-x86_64.exe` — Windows x86_64
